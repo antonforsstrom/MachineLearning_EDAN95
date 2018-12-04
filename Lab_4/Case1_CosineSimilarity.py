@@ -24,31 +24,31 @@ def load(file):
         embeddings[word] = vector
     glove.close()
     emb_dict = embeddings
-    # embedded_words = sorted(list(embeddings_dict.keys()))
     return emb_dict
 
 
 embedding_file = '/Users/Anton/Documents/LTH/EDAN95/Datasets/glove.6B/glove.6B.100d.txt'
 embeddings_dict = load(embedding_file)
 
-print(embeddings_dict['table'])
+# Allow user to input which word to find similar words for
+print('Find closest words to: ')
+word = str(input())
 
-similarity = 0
-similarityKey = 'table'
+# Initiate dictionary to hold five most similar words
+similarityKeys = {0: 'a', 0.0001: 'b', 0.0002: 'c', 0.0003: 'd', 0.0004: 'd'}
 
 for key in embeddings_dict.keys():
-    current = skm.pairwise.cosine_similarity(embeddings_dict['table'], embeddings_dict[key])
-    if current > similarity:
-        similarity = current
-        similarityKey = key
+    current = skm.pairwise.cosine_similarity(np.array(embeddings_dict[word]).reshape(1, -1),
+                                             np.array(embeddings_dict[key]).reshape(1, -1))
+    if current > min([float(number) for number in list(similarityKeys.keys())]) and str(key) != word:
+        similarityKeys.pop(min(similarityKeys.keys()))
+        similarityKeys[current[0][0]] = key
 
+print('Most similar word and similarity value:')
 
-print(similarityKey)
+keyList = similarityKeys.keys()
+keyList = sorted(keyList, reverse=True)
+for key in keyList:
+    print("%s: %s" % (similarityKeys[key], key))
 
-
-# co_sim = cosine_similarity(embeddings_dict['table'],embeddings_dict)
-
-# co_sim_max = np.argmax (co_sim, axis=1)
-
-# print (max = np.amax(embeddings_dict['table']))
 
