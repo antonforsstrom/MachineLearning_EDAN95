@@ -51,6 +51,7 @@ class CoNLLDictorizer:
 
     def _split_in_words(self, sentence):
         rows = re.split('\n', sentence)
+        rows = [row for row in rows if row[0] != '#']
         return [Token(dict(zip(self.column_names,
                                re.split(self.col_sep, row))))
                 for row in rows]
