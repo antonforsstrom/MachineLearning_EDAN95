@@ -5,7 +5,7 @@ Modified example from Pierre Nugues script:
 https://github.com/pnugues/edan95/blob/master/programs/4.3-rnn-pos-tagger.ipynb
 """
 
-from conll_dictionizer import CoNLLDictorizer, Token
+from conll_dictorizer import CoNLLDictorizer, Token
 from keras import models, layers, callbacks
 import numpy as np
 from keras.layers import LSTM, Bidirectional, SimpleRNN, Dense

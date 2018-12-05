@@ -5,7 +5,8 @@ Version with a class modeled as a vectorizer
 """
 __author__ = "Pierre Nugues"
 
-import regex as re
+# import regex as re
+import re
 
 
 def save(file, corpus_dict, column_names):
