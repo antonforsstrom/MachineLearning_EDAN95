@@ -14,24 +14,19 @@ from keras.preprocessing.sequence import pad_sequences
 import matplotlib.pyplot as plt
 from keras.callbacks import History
 
+# As Pierre's example program 4.3
 
-# Some parameters to be used
+# Some parameters
 OPTIMIZER = 'rmsprop'
 BATCH_SIZE = 128
-EPOCHS = 5
-EMBEDDING_DIM = 100
+EPOCHS = 10
+EMBEDDING_DIM = 100  # How is embedding dimension decided?
 MAX_SEQUENCE_LENGTH = 150
-# Will be running RNN in this script
-# LSTM_UNITS = 512
+LSTM_UNITS = 512
 
 
-# Loading embeddings from GloVe and returning a dictionary
+# Makes the GloVe embeddings into a dictionary
 def load(file):
-    """
-    Return the embeddings in the from of a dictionary
-    :param file:
-    :return dictionary:
-    """
     file = file
     embeddings = {}
     glove = open(file)
@@ -39,46 +34,45 @@ def load(file):
         values = line.strip().split()
         word = values[0]
         vector = np.array(values[1:], dtype='float32')
+        vector /= np.sqrt(np.dot(vector, vector))
         embeddings[word] = vector
     glove.close()
-    emb_dict = embeddings
-    embedded_words = sorted(list(emb_dict.keys()))
-    return emb_dict, embedded_words
+    embeddings_dict = embeddings
+    embedded_words = sorted(list(embeddings_dict.keys()))
+    return embeddings_dict, embedded_words
 
 
 embedding_file = '/Users/Anton/Documents/LTH/EDAN95/Datasets/glove.6B/glove.6B.100d.txt'
 embeddings_dict, embedded_words = load(embedding_file)
 
-
 # Loading the corpus
+BASE_DIR = '/Users/Anton/Documents/LTH/EDAN95/Datasets/NER-data'
+
+
+# Loads conll data and makes into sentences
 def load_conll2003_en():
-    base_dir = '/Users/Anton/Documents/LTH/EDAN95/Datasets/NER-data'
-    train_file = base_dir + '/eng.train'
-    valid_file = base_dir + '/eng.valid'
-    test_file = base_dir + '/eng.test'
-    # How do we know these column names?
+    train_file = BASE_DIR + '/eng.train'
+    dev_file = BASE_DIR + '/eng.valid'
+    test_file = BASE_DIR + '/eng.test'
     column_names = ['form', 'ppos', 'pchunk', 'ner']
-
     train_sentences = open(train_file).read().strip()
-    valid_sentences = open(valid_file).read().strip()
+    dev_sentences = open(dev_file).read().strip()
     test_sentences = open(test_file).read().strip()
-
-    return train_sentences, valid_sentences, test_sentences, column_names
+    return train_sentences, dev_sentences, test_sentences, column_names
 
 
 # Converting the corpus into a dictionary
 if __name__ == '__main__':
-    train_sentences, valid_sentences, test_sentences, column_names = load_conll2003_en()
+    train_sentences, dev_sentences, test_sentences, column_names = load_conll2003_en()
 
-    # Why use '+' as sep?
-    conll_dict = CoNLLDictorizer(column_names)
+    conll_dict = CoNLLDictorizer(column_names, col_sep=' +')
     train_dict = conll_dict.transform(train_sentences)
-    valid_dict = conll_dict.transform(valid_sentences)
+    dev_dict = conll_dict.transform(dev_sentences)  # added for dev and test as well
     test_dict = conll_dict.transform(test_sentences)
     print('First sentence, train:', train_dict[0])
 
 
-# Function to build the two-way sequence
+# Function to build the two-way sequences
 # Two vectors: x and Y
 # Instead of extracting_dictorizer
 def build_sequences(corpus_dict, key_x='form', key_y='ner', tolower=True):
@@ -114,6 +108,7 @@ ner = sorted(list(set([ner for sentence in Y_train_cat for ner in sentence])))
 print(ner)
 print(len(ner))
 NB_CLASSES = len(ner)
+ner
 
 # We create the dictionary
 # We add two words for the padding symbol and unknown words
@@ -126,7 +121,7 @@ print('# unique words in the vocabulary: embeddings and corpus:',
       cnt_uniq)
 
 
-# Function to convert the words or NER to indices
+# Function to convert the words or NER
 def to_index(X, idx):
     """
     Convert the word lists (or NER lists) to indexes
@@ -178,18 +173,17 @@ embedding_matrix = rdstate.uniform(-0.05, 0.05,
                                    (len(vocabulary_words) + 2,
                                     EMBEDDING_DIM))
 
-
 for word in vocabulary_words:
     if word in embeddings_dict:
         # If the words are in the embeddings, we fill them with a value
         embedding_matrix[word_idx[word]] = embeddings_dict[word]
 
-print('Shape of embedding matrix:', embedding_matrix.shape)
-print('Embedding of table', embedding_matrix[word_idx['table']])
-print('Embedding of the padding symbol, idx 0, random numbers', embedding_matrix[0])
+# print('Shape of embedding matrix:', embedding_matrix.shape)
+# print('Embedding of table', embedding_matrix[word_idx['table']])
+# print('Embedding of the padding symbol, idx 0, random numbers',
+#      embedding_matrix[0])
 
-# If model has not yet been trained and saved
-if not models.load_model('ModelForNameEntityRecognition'):
+if models.load_model('ModelForNER_w_LSTM') == False:
     # We build the model
     model = models.Sequential()
     model.add(layers.Embedding(len(vocabulary_words) + 2,
@@ -198,23 +192,24 @@ if not models.load_model('ModelForNameEntityRecognition'):
                                input_length=None))
     model.layers[0].set_weights([embedding_matrix])
     # The default is True
-    model.layers[0].trainable = False  # Should be false according to Chollet p.191 - Change from true as in Pierre's ex.
-    model.add(SimpleRNN(100, return_sequences=True))
+    model.layers[
+        0].trainable = False  # Should be false according to Chollet p.191 - Change from true as in Pierre's ex.
+    # model.add(SimpleRNN(100, return_sequences=True))
     model.add(layers.Dropout(0.5))
-    # model.add(Bidirectional(SimpleRNN(100, return_sequences=True)))
-    # model.add(Bidirectional(LSTM(100, return_sequences=True)))
+    model.add(Bidirectional(SimpleRNN(100, return_sequences=True)))
+    model.add(Bidirectional(LSTM(100, return_sequences=True)))
     model.add(Dense(NB_CLASSES + 2, activation='softmax'))  # Multiple categories and not binary as ex. pos./neg. review
 
     # We fit the model
     model.compile(loss='categorical_crossentropy',
-                  optimizer=OPTIMIZER,
+                  optimizer='rmsprop',
                   metrics=['acc'])
     model.summary()
     history = History()
     history = model.fit(X, Y_train, epochs=EPOCHS, batch_size=BATCH_SIZE)
 
     # We save the model
-    model.save('ModelForNameEntityRecognition')
+    model.save('ModelForNER_w_LSTM')
 
     # We plot and show accuracy and loss
     acc = history.history['acc']
@@ -233,9 +228,9 @@ if not models.load_model('ModelForNameEntityRecognition'):
     plt.legend()
     plt.show()
 
-else:
-    model = models.load_model('ModelForNameEntityRecognition')
 
+else:
+    model = models.load_model('ModelForNER_w_LSTM')
 
 
 # Evaluate the model
@@ -268,22 +263,19 @@ test_loss, test_acc = model.evaluate(X_test_padded,
 print('Loss:', test_loss)
 print('Accuracy:', test_acc)
 
-
 # Evaluating on all the test corpus
-print('X_test', X_test_cat[0])
-print('X_test_padded', X_test_padded[0])
+# print('X_test', X_test_cat[0])
+# print('X_test_padded', X_test_padded[0])
 corpus_ner_predictions = model.predict(X_test_padded)
-print('Y_test', Y_test_cat[0])
-print('Y_test_padded', Y_test_padded[0])
-print('predictions', corpus_ner_predictions[0])
-
+# print('Y_test', Y_test_cat[0])
+# print('Y_test_padded', Y_test_padded[0])
+# print('predictions', corpus_ner_predictions[0])
 
 # Remove the padding
 ner_pred_num = []
 for sent_nbr, sent_ner_predictions in enumerate(corpus_ner_predictions):
     ner_pred_num += [sent_ner_predictions[-len(X_test_cat[sent_nbr]):]]
-print(ner_pred_num[:2])
-
+# print(ner_pred_num[:2])
 
 # Convert NER indices to symbols
 ner_pred = []
@@ -292,12 +284,11 @@ for sentence in ner_pred_num:
     ner_pred_cat = list(map(rev_ner_idx.get, ner_pred_idx))
     ner_pred += [ner_pred_cat]
 
-print(ner_pred[:2])
-print(Y_test_cat[:2])
-
+# print(ner_pred[:2])
+# print(Y_test_cat[:2])
 
 # Saving a file with the output
-f = open("output_RNN", "w+")
+f = open("output_LSTM_2", "w+")
 for id_s, sentence in enumerate(X_test_cat):
     for id_w, word in enumerate(sentence):
         f.write(X_test_cat[id_s][id_w] + " " + Y_test_cat[id_s][id_w] + " " + ner_pred[id_s][id_w] + "\n")

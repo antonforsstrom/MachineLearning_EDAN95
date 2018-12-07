@@ -107,7 +107,8 @@ venv.bak/
 *.h5
 *.npz
 history_*
-*ModelForNameEntityRecognition
+Model*
+output*
 
 # Pycharm configurations
 *.idea
