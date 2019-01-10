@@ -85,7 +85,7 @@ history = model.fit_generator(
 model.save('flowers_recognition_case3_2.h5')
 
 # Save history
-filename = 'history_data_case3'
+filename = 'history_data_case3_2'
 outfile = open(filename, 'wb')
 pickle.dump(history, outfile)
 outfile.close()

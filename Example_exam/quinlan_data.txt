@@ -1,0 +1,14 @@
+1 Sunny Hot High False 0
+2 Sunny Hot High True 0
+3 Overcast Hot High False 1
+4 Rain Mild High False 1
+5 Rain Cool Normal False 1
+6 Rain Cool Normal True 0
+7 Overcast Cool Normal True 1
+8 Sunny Mild High False 0
+9 Sunny Cool Normal False 1
+10 Rain Mild Normal False 1
+11 Sunny Mild Normal True 1
+12 Overcast Mild High True 1
+13 Overcast Hot Normal False 1
+14 Rain Mild High True 0

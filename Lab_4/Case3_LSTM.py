@@ -183,7 +183,7 @@ for word in vocabulary_words:
 # print('Embedding of the padding symbol, idx 0, random numbers',
 #      embedding_matrix[0])
 
-if models.load_model('ModelForNER_w_LSTM') == False:
+if not models.load_model('ModelForNER_w_LSTM'):
     # We build the model
     model = models.Sequential()
     model.add(layers.Embedding(len(vocabulary_words) + 2,
@@ -192,12 +192,14 @@ if models.load_model('ModelForNER_w_LSTM') == False:
                                input_length=None))
     model.layers[0].set_weights([embedding_matrix])
     # The default is True
-    model.layers[
-        0].trainable = False  # Should be false according to Chollet p.191 - Change from true as in Pierre's ex.
+    model.layers[0].trainable = False  # Should be false according to Chollet p.191 - Change from true as in Pierre's ex.
     # model.add(SimpleRNN(100, return_sequences=True))
-    model.add(layers.Dropout(0.5))
+    model.add(layers.Dropout(0.2))
     model.add(Bidirectional(SimpleRNN(100, return_sequences=True)))
+    # Should add more dropouts?
+    model.add(layers.Dropout(0.2))
     model.add(Bidirectional(LSTM(100, return_sequences=True)))
+    model.add(layers.Dropout(0.2))
     model.add(Dense(NB_CLASSES + 2, activation='softmax'))  # Multiple categories and not binary as ex. pos./neg. review
 
     # We fit the model
@@ -288,9 +290,9 @@ for sentence in ner_pred_num:
 # print(Y_test_cat[:2])
 
 # Saving a file with the output
-f = open("output_LSTM_2", "w+")
-for id_s, sentence in enumerate(X_test_cat):
-    for id_w, word in enumerate(sentence):
-        f.write(X_test_cat[id_s][id_w] + " " + Y_test_cat[id_s][id_w] + " " + ner_pred[id_s][id_w] + "\n")
-    f.write("\n")
-f.close()
+# f = open("output_LSTM_2", "w+")
+# for id_s, sentence in enumerate(X_test_cat):
+#     for id_w, word in enumerate(sentence):
+#         f.write(X_test_cat[id_s][id_w] + " " + Y_test_cat[id_s][id_w] + " " + ner_pred[id_s][id_w] + "\n")
+#     f.write("\n")
+# f.close()

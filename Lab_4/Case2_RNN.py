@@ -21,8 +21,6 @@ BATCH_SIZE = 128
 EPOCHS = 5
 EMBEDDING_DIM = 100
 MAX_SEQUENCE_LENGTH = 150
-# Will be running RNN in this script
-# LSTM_UNITS = 512
 
 
 # Loading embeddings from GloVe and returning a dictionary
@@ -56,7 +54,7 @@ def load_conll2003_en():
     train_file = base_dir + '/eng.train'
     valid_file = base_dir + '/eng.valid'
     test_file = base_dir + '/eng.test'
-    # How do we know these column names?
+    # The corpus contains tags from different tagging systems
     column_names = ['form', 'ppos', 'pchunk', 'ner']
 
     train_sentences = open(train_file).read().strip()
@@ -79,8 +77,7 @@ if __name__ == '__main__':
 
 
 # Function to build the two-way sequence
-# Two vectors: x and Y
-# Instead of extracting_dictorizer
+# Vectors: x and Y
 def build_sequences(corpus_dict, key_x='form', key_y='ner', tolower=True):
     """
     Creates sequences from a list of dictionaries
@@ -108,7 +105,7 @@ X_train_cat, Y_train_cat = build_sequences(train_dict, key_x='form', key_y='ner'
 print('First sentence, words', X_train_cat[2])
 print('First sentence, NER', Y_train_cat[1])
 
-# Extracting the unique words and NER (does it work to just change POS into NER?)
+# Extracting the unique words and NER
 vocabulary_words = sorted(list(set([word for sentence in X_train_cat for word in sentence])))
 ner = sorted(list(set([ner for sentence in Y_train_cat for ner in sentence])))
 print(ner)
@@ -119,8 +116,7 @@ NB_CLASSES = len(ner)
 # We add two words for the padding symbol and unknown words
 embeddings_words = embeddings_dict.keys()
 print('Words in GloVe:', len(embeddings_dict.keys()))
-vocabulary_words = sorted(list(set(vocabulary_words +
-                                   list(embeddings_words))))
+vocabulary_words = sorted(list(set(vocabulary_words + list(embeddings_words))))
 cnt_uniq = len(vocabulary_words) + 2
 print('# unique words in the vocabulary: embeddings and corpus:',
       cnt_uniq)
@@ -203,7 +199,7 @@ if not models.load_model('ModelForNameEntityRecognition'):
     model.add(layers.Dropout(0.5))
     # model.add(Bidirectional(SimpleRNN(100, return_sequences=True)))
     # model.add(Bidirectional(LSTM(100, return_sequences=True)))
-    model.add(Dense(NB_CLASSES + 2, activation='softmax'))  # Multiple categories and not binary as ex. pos./neg. review
+    model.add(Dense(NB_CLASSES + 2, activation='softmax'))
 
     # We fit the model
     model.compile(loss='categorical_crossentropy',
@@ -236,8 +232,6 @@ if not models.load_model('ModelForNameEntityRecognition'):
 else:
     model = models.load_model('ModelForNameEntityRecognition')
 
-
-
 # Evaluate the model
 # Formatting the test set
 # In X_dict, we replace the words with their index
@@ -246,13 +240,9 @@ X_test_cat, Y_test_cat = build_sequences(test_dict)
 X_test_idx = to_index(X_test_cat, word_idx)
 Y_test_idx = to_index(Y_test_cat, ner_idx)
 
-# print('X[0] test idx', X_test_idx[0])
-# print('Y[0] test idx', Y_test_idx[0])
-
 X_test_padded = pad_sequences(X_test_idx)
 Y_test_padded = pad_sequences(Y_test_idx)
-# print('X[0] test idx passed', X_test_padded[0])
-# print('Y[0] test idx padded', Y_test_padded[0])
+
 # One extra symbol for 0 (padding)
 Y_test_padded_vectorized = to_categorical(Y_test_padded,
                                           num_classes=len(ner) + 2)

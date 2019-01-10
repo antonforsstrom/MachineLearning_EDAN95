@@ -33,6 +33,7 @@ embeddings_dict = load(embedding_file)
 # Allow user to input which word to find similar words for
 print('Find closest words to: ')
 word = str(input())
+print('Processing in progress...')
 
 # Initiate dictionary to hold five most similar words
 similarityKeys = {0: 'a', 0.0001: 'b', 0.0002: 'c', 0.0003: 'd', 0.0004: 'd'}
@@ -44,7 +45,7 @@ for key in embeddings_dict.keys():
         similarityKeys.pop(min(similarityKeys.keys()))
         similarityKeys[current[0][0]] = key
 
-print('Most similar word and similarity value:')
+print('Most similar words and similarity value:')
 
 keyList = similarityKeys.keys()
 keyList = sorted(keyList, reverse=True)

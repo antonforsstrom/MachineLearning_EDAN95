@@ -13,7 +13,7 @@ base = '/Users/Anton/Documents/LTH/EDAN95/Datasets/flowers_split'
 test_dir = os.path.join(base, 'test')
 
 # Load saved trained model and features
-model = models.load_model('flowers_recognition_case3.h5')
+model = models.load_model('flowers_recognition_case3_2.h5')
 
 features = np.load('features.npy.npz')
 
