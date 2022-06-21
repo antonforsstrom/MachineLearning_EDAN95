@@ -16,7 +16,7 @@ keras-preprocessing==1.0.5
 kiwisolver==1.0.1
 markdown==3.0.1
 matplotlib==3.0.2
-numpy==1.15.4
+numpy==1.22.0
 protobuf==3.6.1
 pyglet==1.3.2
 pyparsing==2.3.0
